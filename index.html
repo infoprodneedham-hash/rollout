@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freeware Rollout Stage Process Task Manager</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            roast: {
+              50: '#fbf7f4',
+              100: '#f6ede5',
+              200: '#ecd9cb',
+              300: '#ddbda7',
+              400: '#cc9c7d',
+              500: '#bf815a',
+              600: '#b16a44',
+              700: '#945337',
+              800: '#784330',
+              900: '#623829',
+              950: '#351c14',
+            },
+            espresso: {
+              700: '#3a261e',
+              800: '#2c1c16',
+              900: '#1e130e',
+              950: '#140c09'
+            },
+            latte: {
+              50: '#faf6f0',
+              100: '#f3ece1',
+              200: '#e5d7c3',
+              300: '#d4bfa1',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f6ede5;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #bf815a;
+      border-radius: 9999px;
+    }
+    
+    .smooth-transition {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Modal Backdrop */
+    .modal-overlay {
+      background-color: rgba(20, 12, 9, 0.6);
+      backdrop-filter: blur(4px);
+    }
+    
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #111827 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-roast-50 text-stone-800 min-h-screen flex flex-col antialiased selection:bg-roast-300 selection:text-stone-900">
+
+  <!-- Main Top Bar -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-roast-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Project Switcher -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-roast-700 to-espresso-900 flex items-center justify-center text-white shadow-sm text-lg font-bold">
+          ☕
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-stone-900 leading-tight">
+              Freeware Rollout Manager
+            </h1>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-roast-100 text-roast-800 border border-roast-200">
+              Solo Dev Edition
+            </span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-stone-500 font-medium">Active Rollout:</span>
+            <select id="projectSelector" onchange="switchProject(this.value)" class="text-xs font-semibold bg-roast-100/70 border border-roast-200 text-stone-800 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-roast-500 cursor-pointer">
+              <!-- Dynamically populated -->
+            </select>
+            <button onclick="openNewProjectModal()" class="text-xs text-roast-700 hover:text-roast-900 font-semibold inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-roast-100 transition" title="Add a new app rollout project">
+              + New Project
+            </button>
+            <button onclick="duplicateCurrentProject()" class="text-xs text-stone-500 hover:text-stone-700 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-stone-100 transition" title="Duplicate current rollout blueprint as a new project">
+              Duplicate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center flex-wrap gap-2 no-print">
+        <button id="exportJsonBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-roast-50 text-stone-700 transition inline-flex items-center gap-1.5 border border-roast-200 shadow-xs">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export All (.json)
+        </button>
+
+        <label for="importJsonInput" class="cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-roast-50 text-stone-700 transition inline-flex items-center gap-1.5 border border-roast-200 shadow-xs">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Import (.json)
+          <input type="file" id="importJsonInput" accept=".json" class="hidden">
+        </label>
+
+        <button id="exportMdBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-roast-600 hover:bg-roast-700 text-white transition inline-flex items-center gap-1.5 shadow-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Export Summary
+        </button>
+
+        <button onclick="openManageProjectsModal()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 transition" title="Manage / Rename / Delete Projects">
+          ⚙️ Projects
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
+
+    <!-- Zero-Knowledge Guarantee Banner -->
+    <div class="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-4 flex items-start justify-between gap-3 text-xs sm:text-sm text-stone-700 no-print shadow-xs">
+      <div class="flex items-start gap-3">
+        <span class="text-xl">🛡️</span>
+        <div class="space-y-0.5">
+          <span class="font-bold text-stone-900">Zero-Server Local-First Workspace:</span>
+          <p class="text-xs text-stone-600 leading-relaxed">
+            All app rollouts, schedules, dates, checklists, and notes reside 100% inside your browser's private storage. 
+            When opening or sharing URLs, zero private data leaves your device. Remember to export periodic JSON backups for cloud safety (Google Drive, iCloud, OneDrive).
+          </p>
+        </div>
+      </div>
+      <button onclick="this.parentElement.remove()" class="text-stone-400 hover:text-stone-600 text-sm font-bold px-1.5">✕</button>
+    </div>
+
+    <!-- Active Project Overview Dashboard Card -->
+    <section class="bg-white rounded-2xl border border-roast-200 p-5 sm:p-6 shadow-xs">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        
+        <!-- Progress Bar & Quick Stats -->
+        <div class="lg:w-1/3 space-y-2.5">
+          <div class="flex justify-between items-baseline">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-500">Rollout Completion</span>
+            <span id="progressPercentageText" class="text-2xl font-black text-roast-700">0%</span>
+          </div>
+          <div class="w-full bg-stone-100 rounded-full h-3.5 overflow-hidden border border-stone-200/70">
+            <div id="progressBar" class="bg-gradient-to-r from-roast-500 via-amber-500 to-emerald-500 h-3.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-stone-500 pt-0.5">
+            <span id="tasksRatioText">0 of 14 tasks done</span>
+            <span id="inProgressRatioText">0 in progress</span>
+            <span id="assignedRatioText">0 assigned</span>
+          </div>
+        </div>
+
+        <!-- Project Overview Data Blocks -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 lg:w-2/3 border-t lg:border-t-0 lg:border-l border-roast-200/80 pt-4 lg:pt-0 lg:pl-6">
+          <div class="space-y-0.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Current Phase</span>
+            <div id="currentStageDisplay" class="text-sm font-bold text-stone-900 truncate">Stage 1: Foundation</div>
+            <p class="text-[11px] text-stone-500">Immediate focus pipeline</p>
+          </div>
+
+          <div class="space-y-0.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Target Horizon</span>
+            <div class="text-sm font-bold text-stone-900">3 – 6 Months</div>
+            <p class="text-[11px] text-stone-500">Organically paced launch</p>
+          </div>
+
+          <div class="col-span-2 sm:col-span-1 space-y-0.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Active App Details</span>
+            <div id="currentProjectSubtitle" class="text-sm font-bold text-amber-700 truncate">Flagship App Rollout</div>
+            <p class="text-[11px] text-stone-500" id="currentProjectNotesCount">14 total stages & tasks</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- View Switcher & Global Filters Bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 no-print">
+      
+      <!-- Primary View Switcher: Stages vs Calendar -->
+      <div class="inline-flex p-1 bg-roast-100 rounded-xl border border-roast-200/70 w-full sm:w-auto">
+        <button id="viewTabStages" onclick="switchView('stages')" class="view-switch-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-900 shadow-xs transition inline-flex items-center justify-center gap-1.5">
+          <span>📋</span> Stage Tasks
+        </button>
+        <button id="viewTabCalendar" onclick="switchView('calendar')" class="view-switch-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition inline-flex items-center justify-center gap-1.5">
+          <span>📅</span> Launch Calendar
+        </button>
+      </div>
+
+      <!-- Filters & Search -->
+      <div class="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-end">
+        <div class="flex items-center gap-1 overflow-x-auto">
+          <button data-filter="all" onclick="setTaskFilter('all')" class="filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-roast-700 text-white shadow-xs transition">All</button>
+          <button data-filter="assigned" onclick="setTaskFilter('assigned')" class="filter-tab px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 transition">Assigned</button>
+          <button data-filter="in_progress" onclick="setTaskFilter('in_progress')" class="filter-tab px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 transition">In Progress</button>
+          <button data-filter="completed" onclick="setTaskFilter('completed')" class="filter-tab px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 transition">Complete</button>
+        </div>
+
+        <div class="relative w-full sm:w-60">
+          <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search tasks or notes..." 
+            class="w-full text-xs bg-white border border-stone-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-roast-400 focus:border-transparent text-stone-800 placeholder-stone-400">
+          <svg class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 1: Stages / Tasks View Container -->
+    <div id="stagesViewContainer" class="space-y-8">
+      <!-- Dynamically filled by JS -->
+    </div>
+
+    <!-- VIEW 2: Interactive Calendar View Container -->
+    <div id="calendarViewContainer" class="hidden bg-white rounded-2xl border border-roast-200 p-4 sm:p-6 shadow-xs space-y-4">
+      
+      <!-- Calendar Header Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-roast-200/80 pb-4">
+        <div class="flex items-center gap-3">
+          <h2 id="calendarMonthYear" class="text-base sm:text-lg font-bold text-stone-900">October 2026</h2>
+          <span class="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200 font-medium">Due Date Scheduler</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="navigateMonth(-1)" class="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 transition" title="Previous Month">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onclick="goToCurrentMonth()" class="px-3 py-1 rounded-lg border border-stone-200 text-xs font-semibold hover:bg-stone-50 text-stone-700 transition">
+            Today
+          </button>
+          <button onclick="navigateMonth(1)" class="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 transition" title="Next Month">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Legend & Help -->
+      <div class="flex flex-wrap items-center justify-between text-[11px] text-stone-500 gap-2 pb-1">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-stone-400"></span> Task Assigned</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> In Progress</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Completed</span>
+        </div>
+        <span class="text-stone-400 italic">Click on any date or task badge to manage status or assign new dates</span>
+      </div>
+
+      <!-- Calendar Grid Layout -->
+      <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-stone-500 border-b border-stone-200 pb-2">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+      </div>
+      <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2 auto-rows-fr">
+        <!-- Calendar day cells dynamically inserted by JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Quick Task & Day Management Modal -->
+  <div id="taskModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-stone-200 overflow-hidden transform transition-all">
+      <div class="p-4 sm:p-5 border-b border-stone-100 flex items-center justify-between bg-roast-50/50">
+        <div>
+          <span id="modalStageBadge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-roast-200 text-roast-900">Stage 1</span>
+          <h3 id="modalTaskTitle" class="text-sm sm:text-base font-bold text-stone-900 mt-1 leading-snug">Task Details</h3>
+        </div>
+        <button onclick="closeTaskModal()" class="text-stone-400 hover:text-stone-700 font-bold p-1">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+        
+        <!-- Status & Tri-State Checkboxes -->
+        <div class="bg-stone-50 rounded-xl p-3.5 border border-stone-200/80 space-y-2">
+          <label class="font-bold text-stone-700 block uppercase tracking-wider text-[11px]">Task Lifecycle Progress</label>
+          <div class="grid grid-cols-3 gap-2">
+            
+            <label class="flex items-center gap-2 p-2 rounded-lg border bg-white cursor-pointer hover:border-roast-300">
+              <input type="radio" name="modalTaskStatusRadio" value="assigned" id="radioStatusAssigned" onchange="updateModalTaskStatus('assigned')" class="text-roast-600 focus:ring-roast-400">
+              <div class="flex flex-col">
+                <span class="font-semibold text-stone-800">Assigned</span>
+                <span class="text-[10px] text-stone-500">Planned / Ready</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2 p-2 rounded-lg border bg-white cursor-pointer hover:border-amber-300">
+              <input type="radio" name="modalTaskStatusRadio" value="in_progress" id="radioStatusInProgress" onchange="updateModalTaskStatus('in_progress')" class="text-amber-500 focus:ring-amber-400">
+              <div class="flex flex-col">
+                <span class="font-semibold text-amber-800">In Progress</span>
+                <span class="text-[10px] text-stone-500">Active execution</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2 p-2 rounded-lg border bg-white cursor-pointer hover:border-emerald-300">
+              <input type="radio" name="modalTaskStatusRadio" value="completed" id="radioStatusCompleted" onchange="updateModalTaskStatus('completed')" class="text-emerald-600 focus:ring-emerald-400">
+              <div class="flex flex-col">
+                <span class="font-semibold text-emerald-800">Complete</span>
+                <span class="text-[10px] text-stone-500">Verified & Live</span>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- Target Due Date Picker -->
+        <div class="space-y-1.5">
+          <label class="font-bold text-stone-700 block uppercase tracking-wider text-[11px]">Calendar Due Date</label>
+          <div class="flex items-center gap-2">
+            <input type="date" id="modalTaskDueDate" onchange="updateModalTaskDate(this.value)" class="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-stone-800 text-xs focus:ring-2 focus:ring-roast-400 focus:outline-none">
+            <button onclick="clearModalTaskDate()" class="px-2.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg text-xs font-semibold whitespace-nowrap">Clear Date</button>
+          </div>
+        </div>
+
+        <!-- Action Items Checklist -->
+        <div class="space-y-1.5">
+          <label class="font-bold text-stone-700 block uppercase tracking-wider text-[11px]">Sub-Checklist Actions</label>
+          <div id="modalChecklistContainer" class="space-y-1.5 bg-stone-50 p-3 rounded-xl border border-stone-200/70">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Notes Field -->
+        <div class="space-y-1.5">
+          <label class="font-bold text-stone-700 block uppercase tracking-wider text-[11px]">Task Notes & Deployment URLs</label>
+          <textarea id="modalTaskNotes" rows="3" oninput="updateModalTaskNotes(this.value)" placeholder="Enter credentials, registrar settings, partner links, or logs..." class="w-full bg-white border border-stone-200 rounded-lg p-2.5 text-stone-800 text-xs focus:ring-2 focus:ring-roast-400 focus:outline-none"></textarea>
+        </div>
+
+      </div>
+
+      <div class="p-3.5 border-t border-stone-100 bg-stone-50 flex justify-end">
+        <button onclick="closeTaskModal()" class="px-4 py-2 bg-roast-700 hover:bg-roast-800 text-white font-semibold text-xs rounded-xl shadow-xs">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add New Project -->
+  <div id="newProjectModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-stone-200 p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+        <h3 class="font-bold text-stone-900 text-sm">Add New App Rollout Project</h3>
+        <button onclick="closeNewProjectModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Project / App Name</label>
+          <input type="text" id="newProjectNameInput" placeholder="e.g. Project 2: Authors Note or IdeaPad" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-roast-400 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Initial Target Completion</label>
+          <input type="text" id="newProjectHorizonInput" placeholder="e.g. 3 Months, Q1 2027" value="3 – 6 Months" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-roast-400 focus:outline-none">
+        </div>
+        <p class="text-[11px] text-stone-500">
+          This will automatically clone the complete 5-stage freeware rollout process (Domain setup, SEO, Cookieless analytics, Organic traffic seeding, and Affiliate monetization) as a fresh blank project.
+        </p>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-stone-200">
+        <button onclick="closeNewProjectModal()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg text-xs">Cancel</button>
+        <button onclick="confirmCreateProject()" class="px-3.5 py-1.5 bg-roast-700 hover:bg-roast-800 text-white font-semibold rounded-lg text-xs">Create Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Manage Projects (Rename, Delete) -->
+  <div id="manageProjectsModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-stone-200 p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+        <h3 class="font-bold text-stone-900 text-sm">Manage App Rollout Projects</h3>
+        <button onclick="closeManageProjectsModal()" class="text-stone-400 hover:text-stone-600 font-bold">✕</button>
+      </div>
+      <div id="projectsListContainer" class="space-y-2 max-h-60 overflow-y-auto text-xs">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="flex justify-between items-center pt-2 border-t border-stone-200">
+        <button onclick="resetAllDefaults()" class="text-red-600 hover:text-red-700 text-xs font-semibold">Reset to Factory Defaults</button>
+        <button onclick="closeManageProjectsModal()" class="px-3.5 py-1.5 bg-stone-800 hover:bg-stone-900 text-white font-semibold rounded-lg text-xs">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Markdown / Export Summary -->
+  <div id="exportModal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-stone-200">
+      <div class="p-4 sm:p-5 border-b border-stone-200 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-stone-900 text-sm sm:text-base">Rollout Blueprint & Execution Summary</h3>
+          <p class="text-xs text-stone-500">Copy formatted Markdown or print for offline records</p>
+        </div>
+        <button onclick="closeExportModal()" class="text-stone-400 hover:text-stone-600 font-bold p-1">✕</button>
+      </div>
+      <div class="p-4 overflow-y-auto flex-1">
+        <textarea id="markdownOutput" readonly class="w-full h-80 font-mono text-xs p-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none text-stone-800"></textarea>
+      </div>
+      <div class="p-4 border-t border-stone-200 flex justify-between items-center bg-stone-50/50 rounded-b-2xl">
+        <button onclick="window.print()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition border border-stone-200">
+          Print Blueprint
+        </button>
+        <div class="flex gap-2">
+          <button onclick="copyMarkdownToClipboard()" class="px-4 py-2 bg-roast-700 hover:bg-roast-800 text-white text-xs font-semibold rounded-lg transition shadow-xs">
+            Copy Markdown
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-stone-900 text-white text-xs px-4 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
+    <span id="toastIcon">✓</span>
+    <span id="toastMessage">Changes saved.</span>
+  </div>
+
+  <script>
+    /* Default 5-Stage Template applied to new app projects */
+    const STAGE_TEMPLATE = [
+      {
+        id: "stage-1",
+        number: 1,
+        title: "Domain & Production Foundation",
+        timeframe: "Weeks 1–2",
+        description: "Secure dedicated domain branding, instant edge-cached loading, zero-friction client-side backups, and transparent privacy notices.",
+        tasks: [
+          {
+            id: "task-1",
+            title: "Custom Domain Acquisition & DNS Configuration",
+            timeframe: "Week 1",
+            priority: "Critical",
+            status: "assigned", // assigned | in_progress | completed
+            targetDate: "2026-10-15",
+            notes: "Point domain directly to Cloudflare Pages or Vercel edge with automatic SSL.",
+            checklist: [
+              { text: "Acquire a clean top-level domain (e.g. .com)", done: true },
+              { text: "Attach domain to hosting with automatic SSL/TLS", done: true },
+              { text: "Enforce HTTPS and configure 301 redirect from www to non-www", done: false }
+            ]
+          },
+          {
+            id: "task-2",
+            title: "Core App Deployment & Performance Optimization",
+            timeframe: "Week 1",
+            priority: "High",
+            status: "in_progress",
+            targetDate: "2026-10-20",
+            notes: "Ensure single-file HTML/CSS/JS is cleanly minified for sub-second first paint.",
+            checklist: [
+              { text: "Verify single-file bundle is bug-free and under 250KB", done: true },
+              { text: "Run Lighthouse audit; ensure performance score is 95+", done: false },
+              { text: "Set cache headers for immutable assets at edge CDN", done: false }
+            ]
+          },
+          {
+            id: "task-3",
+            title: "Client-Side Data Integrity & 24-Hour Backup Module",
+            timeframe: "Week 2",
+            priority: "Critical",
+            status: "assigned",
+            targetDate: "2026-10-25",
+            notes: "Ensures user disaster recovery if phone or laptop is lost or stolen.",
+            checklist: [
+              { text: "Build instant JSON export trigger named [app]-backup-YYYY-MM-DD.json", done: false },
+              { text: "Build JSON restore/import parser with schema sanity checks", done: false },
+              { text: "Add 24-hour backup reminder comparing Date.now() against lastBackupTimestamp", done: false }
+            ]
+          },
+          {
+            id: "task-4",
+            title: "Privacy-First Onboarding & User Notice",
+            timeframe: "Week 2",
+            priority: "Medium",
+            status: "assigned",
+            targetDate: "2026-10-30",
+            notes: "Reassures users that their personal/business data never leaves their local device.",
+            checklist: [
+              { text: "Build minimal zero-server explanation modal/slide-out", done: false },
+              { text: "Add explicit statement: 'Sharing this URL only shares the blank tool; your data stays local.'", done: false },
+              { text: "Add single acknowledgement checkbox saved to localStorage", done: false }
+            ]
+          }
+        ]
+      },
+      {
+        id: "stage-2",
+        number: 2,
+        title: "Technical SEO & Organic Architecture",
+        timeframe: "Weeks 3–4",
+        description: "Transform client-side application into an easily crawlable organic search engine asset answering high-intent long-tail user queries.",
+        tasks: [
+          {
+            id: "task-5",
+            title: "Static Meta & Social Card Configuration",
+            timeframe: "Week 3",
+            priority: "High",
+            status: "assigned",
+            targetDate: "2026-11-05",
+            notes: "Social previews should look crisp when shared on Reddit, forums, or X.",
+            checklist: [
+              { text: "Author intent-focused <title> (< 60 chars) and meta description (< 155 chars)", done: false },
+              { text: "Set up OpenGraph (og:title, og:description, og:image) and Twitter Card tags", done: false },
+              { text: "Host high-contrast 1200x630px preview screenshot of clean app UI", done: false }
+            ]
+          },
+          {
+            id: "task-6",
+            title: "Semantic Crawlability & Long-Tail Copy",
+            timeframe: "Weeks 3–4",
+            priority: "High",
+            status: "assigned",
+            targetDate: "2026-11-12",
+            notes: "Search engines need static HTML to read and index before JS executes.",
+            checklist: [
+              { text: "Ensure static H1, H2s, and feature bullet points exist in direct HTML markup", done: false },
+              { text: "Add expandable FAQ section addressing privacy, offline capability, and formats", done: false },
+              { text: "Generate and deploy valid sitemap.xml and robots.txt files", done: false }
+            ]
+          },
+          {
+            id: "task-7",
+            title: "Search Console & Indexation Pipeline",
+            timeframe: "Week 4",
+            priority: "Medium",
+            status: "assigned",
+            targetDate: "2026-11-18",
+            notes: "Establish baseline ranking positions and catch any crawling errors early.",
+            checklist: [
+              { text: "Verify property ownership in Google Search Console and Bing Webmaster Tools", done: false },
+              { text: "Submit sitemap.xml for initial crawling", done: false },
+              { text: "Execute live URL Inspection test to ensure Googlebot renders client workspace", done: false }
+            ]
+          }
+        ]
+      },
+      {
+        id: "stage-3",
+        number: 3,
+        title: "Low-Maintenance Operations & Analytics",
+        timeframe: "Weeks 5–6",
+        description: "Implement cookieless, non-invasive analytics and low-pressure feedback channels with zero customer support burden.",
+        tasks: [
+          {
+            id: "task-8",
+            title: "Cookieless, Privacy-Respecting Analytics",
+            timeframe: "Week 5",
+            priority: "Medium",
+            status: "assigned",
+            targetDate: "2026-11-25",
+            notes: "No cookie banners, no IP tracking, zero maintenance overhead.",
+            checklist: [
+              { text: "Embed lightweight script (Plausible, Umami, or Cloudflare Web Analytics)", done: false },
+              { text: "Configure custom event goals (e.g. backup_downloaded, file_imported)", done: false },
+              { text: "Confirm zero personal identifiers or cookies are placed on user devices", done: false }
+            ]
+          },
+          {
+            id: "task-9",
+            title: "Low-Pressure Devlog & Feedback Channel",
+            timeframe: "Week 6",
+            priority: "Medium",
+            status: "assigned",
+            targetDate: "2026-12-02",
+            notes: "Public devlog updates replace messy email newsletters; structured forms replace 24/7 inboxes.",
+            checklist: [
+              { text: "Deploy static /log or /updates page with brief bullet-point release notes", done: false },
+              { text: "Add structured mailto: or pre-categorized form (Bug, Idea, Business)", done: false },
+              { text: "Include solo developer disclaimer: 'All feedback is read; personal replies cannot be guaranteed'", done: false }
+            ]
+          }
+        ]
+      },
+      {
+        id: "stage-4",
+        number: 4,
+        title: "Traffic Seeding & Baseline Monitoring",
+        timeframe: "Months 2–4",
+        description: "Seed the app in high-affinity organic communities, observe retention, and verify real-world utility before monetizing.",
+        tasks: [
+          {
+            id: "task-10",
+            title: "Organic Distribution & Community Seeding",
+            timeframe: "Month 2–3",
+            priority: "High",
+            status: "assigned",
+            targetDate: "2026-12-20",
+            notes: "Position as a gift to the community—zero paywalls, zero accounts required.",
+            checklist: [
+              { text: "Share in targeted sole-trader, freelancer, or student communities (Reddit, indie forums)", done: false },
+              { text: "Emphasize local-first privacy and instant utility (no signups or card needed)", done: false },
+              { text: "Gather early user bug feedback and deploy rapid minor fixes", done: false }
+            ]
+          },
+          {
+            id: "task-11",
+            title: "Traffic & Engagement Audit",
+            timeframe: "Months 3–4",
+            priority: "High",
+            status: "assigned",
+            targetDate: "2027-01-25",
+            notes: "Look for returning weekly sessions—the true indicator of local-first product-market fit.",
+            checklist: [
+              { text: "Analyze weekly returning user rate in cookieless dashboard", done: false },
+              { text: "Evaluate organic search queries and click-through rates in Search Console", done: false },
+              { text: "Verify that daily backup export triggers are actively being used", done: false }
+            ]
+          }
+        ]
+      },
+      {
+        id: "stage-5",
+        number: 5,
+        title: "Non-Intrusive Monetization Rollout",
+        timeframe: "Months 5–6+",
+        description: "Introduce natural, high-context affiliate partnerships that solve the next step for users without disrupting clean aesthetics.",
+        tasks: [
+          {
+            id: "task-12",
+            title: "High-Context Affiliate Selection",
+            timeframe: "Month 5",
+            priority: "High",
+            status: "assigned",
+            targetDate: "2027-02-15",
+            notes: "Choose partners that solve the immediate post-app step (e.g. sole trader banking or tax tools).",
+            checklist: [
+              { text: "Audit verified user demographic data to choose 1-2 exact complementary tools", done: false },
+              { text: "Apply to direct affiliate programs with verified traffic numbers in hand", done: false },
+              { text: "Strictly avoid generic banner ad networks that slow down or clutter the UI", done: false }
+            ]
+          },
+          {
+            id: "task-13",
+            title: "Native Placement Integration",
+            timeframe: "Month 5",
+            priority: "Medium",
+            status: "assigned",
+            targetDate: "2027-02-28",
+            notes: "Keep recommendations subtle, tasteful, and legally transparent.",
+            checklist: [
+              { text: "Place clean, single-line recommendation callouts after primary user workflows", done: false },
+              { text: "Ensure full legal compliance with clear plain-text 'Partner / Affiliate' notice", done: false },
+              { text: "Add outbound event tracking to measure link engagement without third-party cookies", done: false }
+            ]
+          },
+          {
+            id: "task-14",
+            title: "Process Blueprinting for Subsequent Apps",
+            timeframe: "Month 6",
+            priority: "Medium",
+            status: "assigned",
+            targetDate: "2027-03-25",
+            notes: "Replicate the exact deployment system for the remaining suite applications.",
+            checklist: [
+              { text: "Package reusable backup reminder and privacy modal code component", done: false },
+              { text: "Standardize SEO meta structure and devlog template for subsequent tools", done: false },
+              { text: "Begin rollout pipeline for Flagship #2 (e.g. Authors Note or IdeaPad)", done: false }
+            ]
+          }
+        ]
+      }
+    ];
+
+    /* Initial App Store State */
+    const APP_STORAGE_KEY = 'roastery_rollout_multi_project_v2';
+    
+    let appState = {
+      activeProjectId: "proj-1",
+      projects: [
+        {
+          id: "proj-1",
+          name: "Project 1: Flagship Hub & Sole Trader",
+          horizon: "3 – 6 Months",
+          stages: JSON.parse(JSON.stringify(STAGE_TEMPLATE))
+        }
+      ]
+    };
+
+    let currentView = 'stages'; // 'stages' | 'calendar'
+    let currentFilter = 'all'; // 'all' | 'assigned' | 'in_progress' | 'completed'
+    let searchQuery = '';
+    let calendarDate = new Date(2026, 9, 1); // Oct 2026 as standard anchor
+    let activeModalTask = null; // { stageId, taskId }
+
+    function loadAppState() {
+      try {
+        const stored = localStorage.getItem(APP_STORAGE_KEY);
+        if (stored) {
+          appState = JSON.parse(stored);
+          if (!appState.projects || appState.projects.length === 0) {
+            resetToDefaultState();
+          }
+        } else {
+          resetToDefaultState();
+        }
+      } catch (err) {
+        console.error("Storage error:", err);
+        resetToDefaultState();
+      }
+      renderProjectSelector();
+      updateDashboardMetrics();
+      renderCurrentView();
+    }
+
+    function saveAppState() {
+      try {
+        localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
+        updateDashboardMetrics();
+      } catch (err) {
+        console.error("Failed to save appState:", err);
+      }
+    }
+
+    function resetToDefaultState() {
+      appState = {
+        activeProjectId: "proj-1",
+        projects: [
+          {
+            id: "proj-1",
+            name: "Project 1: Flagship Hub & Sole Trader",
+            horizon: "3 – 6 Months",
+            stages: JSON.parse(JSON.stringify(STAGE_TEMPLATE))
+          }
+        ]
+      };
+      saveAppState();
+    }
+
+    function getActiveProject() {
+      let proj = appState.projects.find(p => p.id === appState.activeProjectId);
+      if (!proj) {
+        proj = appState.projects[0];
+        appState.activeProjectId = proj.id;
+      }
+      return proj;
+    }
+
+    function renderProjectSelector() {
+      const selector = document.getElementById('projectSelector');
+      selector.innerHTML = '';
+      appState.projects.forEach(proj => {
+        const opt = document.createElement('option');
+        opt.value = proj.id;
+        opt.textContent = proj.name;
+        if (proj.id === appState.activeProjectId) opt.selected = true;
+        selector.appendChild(opt);
+      });
+
+      const currentProj = getActiveProject();
+      document.getElementById('currentProjectSubtitle').textContent = currentProj.name;
+    }
+
+    function switchProject(projectId) {
+      appState.activeProjectId = projectId;
+      saveAppState();
+      renderProjectSelector();
+      updateDashboardMetrics();
+      renderCurrentView();
+      showToast(`Switched to ${getActiveProject().name}`);
+    }
+
+    function openNewProjectModal() {
+      document.getElementById('newProjectNameInput').value = '';
+      document.getElementById('newProjectHorizonInput').value = '3 – 6 Months';
+      document.getElementById('newProjectModal').classList.remove('hidden');
+    }
+
+    function closeNewProjectModal() {
+      document.getElementById('newProjectModal').classList.add('hidden');
+    }
+
+    function confirmCreateProject() {
+      const name = document.getElementById('newProjectNameInput').value.trim();
+      const horizon = document.getElementById('newProjectHorizonInput').value.trim() || '3 – 6 Months';
+      if (!name) {
+        showToast("Please enter an app rollout name.", "⚠️");
+        return;
+      }
+
+      const newId = 'proj-' + Date.now();
+      const newProj = {
+        id: newId,
+        name: name,
+        horizon: horizon,
+        stages: JSON.parse(JSON.stringify(STAGE_TEMPLATE))
+      };
+
+      appState.projects.push(newProj);
+      appState.activeProjectId = newId;
+      saveAppState();
+      closeNewProjectModal();
+      renderProjectSelector();
+      updateDashboardMetrics();
+      renderCurrentView();
+      showToast(`Created new project: ${name}`);
+    }
+
+    function duplicateCurrentProject() {
+      const current = getActiveProject();
+      const newId = 'proj-' + Date.now();
+      const clonedStages = JSON.parse(JSON.stringify(current.stages));
+
+      const newProj = {
+        id: newId,
+        name: `${current.name} (Copy)`,
+        horizon: current.horizon,
+        stages: clonedStages
+      };
+
+      appState.projects.push(newProj);
+      appState.activeProjectId = newId;
+      saveAppState();
+      renderProjectSelector();
+      updateDashboardMetrics();
+      renderCurrentView();
+      showToast(`Duplicated current project.`);
+    }
+
+    function openManageProjectsModal() {
+      const container = document.getElementById('projectsListContainer');
+      container.innerHTML = '';
+
+      appState.projects.forEach((proj, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-2.5 rounded-lg border border-stone-200 bg-stone-50';
+        row.innerHTML = `
+          <div class="flex-1 mr-2">
+            <input type="text" value="${escapeHtml(proj.name)}" onchange="renameProject('${proj.id}', this.value)" class="w-full text-xs font-semibold bg-white border border-stone-200 rounded px-2 py-1 text-stone-800">
+          </div>
+          <div class="flex items-center gap-1.5">
+            ${appState.projects.length > 1 ? `
+              <button onclick="deleteProject('${proj.id}')" class="text-xs text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded hover:bg-red-50">
+                Delete
+              </button>
+            ` : '<span class="text-[10px] text-stone-400">Primary</span>'}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      document.getElementById('manageProjectsModal').classList.remove('hidden');
+    }
+
+    function closeManageProjectsModal() {
+      document.getElementById('manageProjectsModal').classList.add('hidden');
+    }
+
+    function renameProject(projId, newName) {
+      const proj = appState.projects.find(p => p.id === projId);
+      if (proj && newName.trim()) {
+        proj.name = newName.trim();
+        saveAppState();
+        renderProjectSelector();
+        showToast("Project renamed.");
+      }
+    }
+
+    function deleteProject(projId) {
+      if (appState.projects.length <= 1) {
+        showToast("Cannot delete the only project.", "⚠️");
+        return;
+      }
+      appState.projects = appState.projects.filter(p => p.id !== projId);
+      if (appState.activeProjectId === projId) {
+        appState.activeProjectId = appState.projects[0].id;
+      }
+      saveAppState();
+      renderProjectSelector();
+      openManageProjectsModal(); // refresh list
+      updateDashboardMetrics();
+      renderCurrentView();
+      showToast("Project deleted.");
+    }
+
+    function resetAllDefaults() {
+      resetToDefaultState();
+      closeManageProjectsModal();
+      renderProjectSelector();
+      updateDashboardMetrics();
+      renderCurrentView();
+      showToast("Reset all projects to blueprint defaults.");
+    }
+
+    function updateDashboardMetrics() {
+      const proj = getActiveProject();
+      let total = 0;
+      let completed = 0;
+      let inProgress = 0;
+      let assigned = 0;
+      let firstPendingStageTitle = "Stage 5: Monetization";
+      let foundActive = false;
+
+      proj.stages.forEach(stage => {
+        let stageAllDone = true;
+        stage.tasks.forEach(task => {
+          total++;
+          if (task.status === 'completed') {
+            completed++;
+          } else {
+            stageAllDone = false;
+            if (task.status === 'in_progress') inProgress++;
+            if (task.status === 'assigned') assigned++;
+          }
+        });
+
+        if (!stageAllDone && !foundActive) {
+          firstPendingStageTitle = `Stage ${stage.number}: ${stage.title}`;
+          foundActive = true;
+        }
+      });
+
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      document.getElementById('progressPercentageText').textContent = `${pct}%`;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+      document.getElementById('tasksRatioText').textContent = `${completed} of ${total} done`;
+      document.getElementById('inProgressRatioText').textContent = `${inProgress} in progress`;
+      document.getElementById('assignedRatioText').textContent = `${assigned} assigned`;
+      document.getElementById('currentStageDisplay').textContent = firstPendingStageTitle;
+    }
+
+    function switchView(viewName) {
+      currentView = viewName;
+      const stagesTab = document.getElementById('viewTabStages');
+      const calTab = document.getElementById('viewTabCalendar');
+      const stagesContainer = document.getElementById('stagesViewContainer');
+      const calContainer = document.getElementById('calendarViewContainer');
+
+      if (viewName === 'stages') {
+        stagesTab.className = 'view-switch-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-900 shadow-xs transition inline-flex items-center justify-center gap-1.5';
+        calTab.className = 'view-switch-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition inline-flex items-center justify-center gap-1.5';
+        stagesContainer.classList.remove('hidden');
+        calContainer.classList.add('hidden');
+        renderStagesView();
+      } else {
+        calTab.className = 'view-switch-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-900 shadow-xs transition inline-flex items-center justify-center gap-1.5';
+        stagesTab.className = 'view-switch-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 transition inline-flex items-center justify-center gap-1.5';
+        stagesContainer.classList.add('hidden');
+        calContainer.classList.remove('hidden');
+        renderCalendarView();
+      }
+    }
+
+    function renderCurrentView() {
+      if (currentView === 'stages') {
+        renderStagesView();
+      } else {
+        renderCalendarView();
+      }
+    }
+
+    function setTaskFilter(filterName) {
+      currentFilter = filterName;
+      document.querySelectorAll('.filter-tab').forEach(btn => {
+        if (btn.getAttribute('data-filter') === filterName) {
+          btn.className = 'filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold bg-roast-700 text-white shadow-xs transition';
+        } else {
+          btn.className = 'filter-tab px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 transition';
+        }
+      });
+      renderCurrentView();
+    }
+
+    function handleSearch(query) {
+      searchQuery = query.toLowerCase();
+      renderCurrentView();
+    }
+
+    function renderStagesView() {
+      const container = document.getElementById('stagesViewContainer');
+      container.innerHTML = '';
+      const proj = getActiveProject();
+
+      proj.stages.forEach(stage => {
+        // Filter tasks
+        const filteredTasks = stage.tasks.filter(task => {
+          if (currentFilter !== 'all' && task.status !== currentFilter) return false;
+          if (searchQuery.trim() !== '') {
+            const matchTitle = task.title.toLowerCase().includes(searchQuery);
+            const matchNotes = (task.notes || '').toLowerCase().includes(searchQuery);
+            const matchChecklist = task.checklist.some(c => c.text.toLowerCase().includes(searchQuery));
+            if (!matchTitle && !matchNotes && !matchChecklist) return false;
+          }
+          return true;
+        });
+
+        if (filteredTasks.length === 0 && (currentFilter !== 'all' || searchQuery.trim() !== '')) {
+          return;
+        }
+
+        const stageSection = document.createElement('section');
+        stageSection.className = 'space-y-3';
+
+        // Stage Header
+        const header = document.createElement('div');
+        header.className = 'flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-roast-200 pb-2.5';
+        header.innerHTML = `
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="w-6 h-6 rounded-full bg-roast-700 text-white text-xs font-bold flex items-center justify-center">${stage.number}</span>
+            <h2 class="text-base font-bold text-stone-900">${stage.title}</h2>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-roast-100 text-roast-800 border border-roast-200">${stage.timeframe}</span>
+          </div>
+          <p class="text-xs text-stone-500 max-w-lg sm:text-right">${stage.description}</p>
+        `;
+        stageSection.appendChild(header);
+
+        // Tasks Grid
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 gap-3.5';
+
+        stage.tasks.forEach(task => {
+          if (!filteredTasks.some(ft => ft.id === task.id)) return;
+
+          const card = document.createElement('div');
+          card.className = `task-card bg-white rounded-xl border ${task.status === 'completed' ? 'border-emerald-200 bg-emerald-50/15' : task.status === 'in_progress' ? 'border-amber-300 bg-amber-50/10' : 'border-roast-200'} p-4 sm:p-5 shadow-xs space-y-4`;
+
+          // Priority badge
+          let priorityClasses = 'bg-stone-100 text-stone-700 border-stone-200';
+          if (task.priority === 'Critical') priorityClasses = 'bg-red-50 text-red-700 border-red-200';
+          if (task.priority === 'High') priorityClasses = 'bg-amber-50 text-amber-700 border-amber-200';
+
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3 flex-1">
+                <!-- Quick Cycle Status Icon Button -->
+                <button onclick="cycleTaskState('${stage.id}', '${task.id}')" 
+                  class="mt-1 w-6 h-6 rounded-md border flex items-center justify-center transition font-bold text-xs ${task.status === 'completed' ? 'bg-emerald-600 border-emerald-600 text-white' : task.status === 'in_progress' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-stone-300 text-stone-400 hover:border-roast-400'}"
+                  title="Click to cycle: Assigned -> In Progress -> Complete">
+                  ${task.status === 'completed' ? '✓' : task.status === 'in_progress' ? '⏳' : '○'}
+                </button>
+
+                <div class="space-y-1 flex-1">
+                  <div class="flex items-center flex-wrap gap-2">
+                    <h3 class="font-bold text-sm sm:text-base text-stone-900 ${task.status === 'completed' ? 'line-through text-stone-400' : ''}">${task.title}</h3>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md border ${priorityClasses}">${task.priority}</span>
+                  </div>
+
+                  <!-- Date & Timeline -->
+                  <div class="text-xs text-stone-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span>Target: <strong>${task.timeframe}</strong></span>
+                    <label class="inline-flex items-center gap-1.5 text-xs text-stone-600">
+                      <span>Due:</span>
+                      <input type="date" value="${task.targetDate || ''}" 
+                        onchange="setTaskDueDate('${stage.id}', '${task.id}', this.value)"
+                        class="bg-transparent border-b border-stone-300 focus:outline-none focus:border-roast-500 px-1 py-0.5 text-xs text-stone-700 font-medium">
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tri-State Status Selector -->
+              <div class="flex items-center gap-1">
+                <select onchange="setTaskStatusValue('${stage.id}', '${task.id}', this.value)"
+                  class="text-xs border border-stone-200 rounded-lg px-2 py-1 font-semibold focus:outline-none focus:ring-1 focus:ring-roast-400 cursor-pointer ${task.status === 'completed' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : task.status === 'in_progress' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-stone-50 text-stone-700'}">
+                  <option value="assigned" ${task.status === 'assigned' ? 'selected' : ''}>Assigned</option>
+                  <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                  <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Complete</option>
+                </select>
+                <button onclick="openTaskModal('${stage.id}', '${task.id}')" class="p-1 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-stone-700" title="Expand Full Task Details">
+                  🔍
+                </button>
+              </div>
+            </div>
+
+            <!-- Sub Checklist -->
+            <div class="bg-stone-50/80 border border-stone-200/60 rounded-xl p-3 space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">Milestone Checklist</span>
+              <div class="space-y-1.5">
+                ${task.checklist.map((item, idx) => `
+                  <label class="flex items-start gap-2.5 text-xs text-stone-700 cursor-pointer select-none">
+                    <input type="checkbox" ${item.done ? 'checked' : ''} 
+                      onchange="toggleTaskCheckitem('${stage.id}', '${task.id}', ${idx})"
+                      class="rounded border-stone-300 text-roast-700 focus:ring-roast-400 mt-0.5 w-3.5 h-3.5">
+                    <span class="${item.done ? 'line-through text-stone-400' : ''}">${escapeHtml(item.text)}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Notes Field -->
+            <div class="space-y-1">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">Notes, Links, or Registrar Records</label>
+              <textarea 
+                placeholder="Log notes, test URLs, analytics tokens, or registrar accounts..." 
+                oninput="setTaskNotes('${stage.id}', '${task.id}', this.value)"
+                class="w-full text-xs text-stone-700 p-2.5 rounded-lg border border-stone-200 bg-white focus:outline-none focus:ring-1 focus:ring-roast-400 transition"
+                rows="2">${task.notes || ''}</textarea>
+            </div>
+          `;
+
+          grid.appendChild(card);
+        });
+
+        stageSection.appendChild(grid);
+        container.appendChild(stageSection);
+      });
+
+      if (container.children.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 bg-white rounded-2xl border border-stone-200 p-6">
+            <p class="text-sm text-stone-500">No tasks match your active filter.</p>
+            <button onclick="setTaskFilter('all')" class="mt-3 px-3.5 py-1.5 bg-roast-700 text-white rounded-lg text-xs font-semibold">Show All Tasks</button>
+          </div>
+        `;
+      }
+    }
+
+    function navigateMonth(direction) {
+      calendarDate.setMonth(calendarDate.getMonth() + direction);
+      renderCalendarView();
+    }
+
+    function goToCurrentMonth() {
+      const now = new Date();
+      calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderCalendarView();
+    }
+
+    function renderCalendarView() {
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+      const grid = document.getElementById('calendarDaysGrid');
+      grid.innerHTML = '';
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevMonthDays = new Date(year, month, 0).getDate();
+
+      // Gather tasks for active project
+      const proj = getActiveProject();
+      const taskMap = {}; // "YYYY-MM-DD" -> array of tasks
+      proj.stages.forEach(st => {
+        st.tasks.forEach(t => {
+          if (t.targetDate) {
+            if (!taskMap[t.targetDate]) taskMap[t.targetDate] = [];
+            taskMap[t.targetDate].push({ task: t, stage: st });
+          }
+        });
+      });
+
+      // Render previous month padding days
+      for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const dayNum = prevMonthDays - i;
+        const cell = document.createElement('div');
+        cell.className = 'min-h-[90px] sm:min-h-[110px] p-1.5 sm:p-2 bg-stone-50/50 rounded-xl border border-stone-100 text-stone-300 text-left';
+        cell.innerHTML = `<span class="text-[11px] font-medium">${dayNum}</span>`;
+        grid.appendChild(cell);
+      }
+
+      // Render actual days of current month
+      const today = new Date();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+        
+        const cell = document.createElement('div');
+        cell.className = `min-h-[90px] sm:min-h-[110px] p-1.5 sm:p-2 rounded-xl border transition flex flex-col justify-between text-left group ${isToday ? 'bg-amber-50/40 border-amber-300 ring-1 ring-amber-300' : 'bg-white border-stone-200/80 hover:border-roast-300'}`;
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'flex items-center justify-between';
+        headerDiv.innerHTML = `
+          <span class="text-xs font-bold ${isToday ? 'text-amber-800 font-extrabold' : 'text-stone-700'}">${day}</span>
+          <button onclick="promptAssignDate('${dateStr}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-roast-700 hover:text-roast-900 font-bold px-1 rounded bg-roast-100" title="Assign a task to this date">+</button>
+        `;
+        cell.appendChild(headerDiv);
+
+        // Container for task chips on this date
+        const chipsContainer = document.createElement('div');
+        chipsContainer.className = 'space-y-1 mt-1 flex-1 overflow-y-auto max-h-[85px]';
+
+        if (taskMap[dateStr] && taskMap[dateStr].length > 0) {
+          taskMap[dateStr].forEach(({ task, stage }) => {
+            // Apply filter
+            if (currentFilter !== 'all' && task.status !== currentFilter) return;
+
+            let badgeColor = 'bg-stone-100 text-stone-700 border-stone-200';
+            let dot = '○';
+            if (task.status === 'in_progress') {
+              badgeColor = 'bg-amber-50 text-amber-900 border-amber-200';
+              dot = '⏳';
+            } else if (task.status === 'completed') {
+              badgeColor = 'bg-emerald-50 text-emerald-900 border-emerald-200';
+              dot = '✓';
+            }
+
+            const chip = document.createElement('div');
+            chip.onclick = () => openTaskModal(stage.id, task.id);
+            chip.className = `cursor-pointer text-[10px] sm:text-[11px] p-1 rounded-md border font-medium truncate flex items-center gap-1 hover:shadow-xs transition ${badgeColor}`;
+            chip.title = `${task.title} (${task.status.replace('_', ' ')})`;
+            chip.innerHTML = `<span>${dot}</span> <span class="truncate ${task.status === 'completed' ? 'line-through text-stone-400' : ''}">${escapeHtml(task.title)}</span>`;
+            chipsContainer.appendChild(chip);
+          });
+        }
+
+        cell.appendChild(chipsContainer);
+        grid.appendChild(cell);
+      }
+
+      // Fill remaining grid spaces to make even rows
+      const totalCells = firstDayIndex + daysInMonth;
+      const remainder = (7 - (totalCells % 7)) % 7;
+      for (let i = 1; i <= remainder; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'min-h-[90px] sm:min-h-[110px] p-1.5 sm:p-2 bg-stone-50/50 rounded-xl border border-stone-100 text-stone-300 text-left';
+        cell.innerHTML = `<span class="text-[11px] font-medium">${i}</span>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    // Assign an unscheduled task to a specific date from calendar
+    function promptAssignDate(dateStr) {
+      const proj = getActiveProject();
+      const eligibleTasks = [];
+      proj.stages.forEach(st => {
+        st.tasks.forEach(t => {
+          eligibleTasks.push({ stageId: st.id, task: t });
+        });
+      });
+
+      if (eligibleTasks.length === 0) return;
+
+      const taskNames = eligibleTasks.map((item, idx) => `${idx + 1}. [${item.task.status}] ${item.task.title}`).join('\n');
+      const choice = prompt(`Select task number to set due date to ${dateStr}:\n\n${taskNames}`);
+      if (!choice) return;
+
+      const selectedIndex = parseInt(choice, 10) - 1;
+      if (selectedIndex >= 0 && selectedIndex < eligibleTasks.length) {
+        const target = eligibleTasks[selectedIndex];
+        target.task.targetDate = dateStr;
+        saveAppState();
+        renderCalendarView();
+        showToast(`Assigned due date ${dateStr} to ${target.task.title}`);
+      }
+    }
+
+    function cycleTaskState(stageId, taskId) {
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const task = stage.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (task.status === 'assigned') {
+        task.status = 'in_progress';
+      } else if (task.status === 'in_progress') {
+        task.status = 'completed';
+        task.checklist.forEach(c => c.done = true);
+      } else {
+        task.status = 'assigned';
+      }
+
+      saveAppState();
+      renderCurrentView();
+      showToast(`Status: ${task.status.replace('_', ' ')}`);
+    }
+
+    function setTaskStatusValue(stageId, taskId, newStatus) {
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const task = stage.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.status = newStatus;
+      if (newStatus === 'completed') {
+        task.checklist.forEach(c => c.done = true);
+      }
+      saveAppState();
+      renderCurrentView();
+      showToast(`Task marked as ${newStatus.replace('_', ' ')}`);
+    }
+
+    function setTaskDueDate(stageId, taskId, dateValue) {
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const task = stage.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.targetDate = dateValue;
+      saveAppState();
+      showToast("Due date updated.");
+    }
+
+    function setTaskNotes(stageId, taskId, notesValue) {
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const task = stage.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.notes = notesValue;
+      saveAppState();
+    }
+
+    function toggleTaskCheckitem(stageId, taskId, idx) {
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const task = stage.tasks.find(t => t.id === taskId);
+      if (!task || !task.checklist[idx]) return;
+
+      task.checklist[idx].done = !task.checklist[idx].done;
+      
+      const allDone = task.checklist.every(c => c.done);
+      if (allDone && task.status !== 'completed') {
+        task.status = 'completed';
+      } else if (!allDone && task.status === 'completed') {
+        task.status = 'in_progress';
+      }
+
+      saveAppState();
+      renderCurrentView();
+    }
+
+    function openTaskModal(stageId, taskId) {
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const task = stage.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      activeModalTask = { stageId, taskId };
+
+      document.getElementById('modalStageBadge').textContent = `Stage ${stage.number}: ${stage.title}`;
+      document.getElementById('modalTaskTitle').textContent = task.title;
+      document.getElementById('modalTaskDueDate').value = task.targetDate || '';
+      document.getElementById('modalTaskNotes').value = task.notes || '';
+
+      // Set radio status
+      document.getElementById('radioStatusAssigned').checked = (task.status === 'assigned');
+      document.getElementById('radioStatusInProgress').checked = (task.status === 'in_progress');
+      document.getElementById('radioStatusCompleted').checked = (task.status === 'completed');
+
+      // Populate Checklist
+      const checkContainer = document.getElementById('modalChecklistContainer');
+      checkContainer.innerHTML = '';
+      task.checklist.forEach((item, idx) => {
+        const row = document.createElement('label');
+        row.className = 'flex items-start gap-2.5 text-xs text-stone-700 cursor-pointer select-none';
+        row.innerHTML = `
+          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleModalCheckitem(${idx})" class="rounded border-stone-300 text-roast-700 focus:ring-roast-400 mt-0.5 w-3.5 h-3.5">
+          <span class="${item.done ? 'line-through text-stone-400' : ''}">${escapeHtml(item.text)}</span>
+        `;
+        checkContainer.appendChild(row);
+      });
+
+      document.getElementById('taskModal').classList.remove('hidden');
+    }
+
+    function closeTaskModal() {
+      activeModalTask = null;
+      document.getElementById('taskModal').classList.add('hidden');
+      renderCurrentView();
+      updateDashboardMetrics();
+    }
+
+    function updateModalTaskStatus(status) {
+      if (!activeModalTask) return;
+      setTaskStatusValue(activeModalTask.stageId, activeModalTask.taskId, status);
+      // Refresh modal checklist if marked complete
+      if (status === 'completed') {
+        const proj = getActiveProject();
+        const stage = proj.stages.find(s => s.id === activeModalTask.stageId);
+        const task = stage.tasks.find(t => t.id === activeModalTask.taskId);
+        openTaskModal(stage.id, task.id);
+      }
+    }
+
+    function updateModalTaskDate(dateVal) {
+      if (!activeModalTask) return;
+      setTaskDueDate(activeModalTask.stageId, activeModalTask.taskId, dateVal);
+    }
+
+    function clearModalTaskDate() {
+      if (!activeModalTask) return;
+      document.getElementById('modalTaskDueDate').value = '';
+      setTaskDueDate(activeModalTask.stageId, activeModalTask.taskId, '');
+    }
+
+    function updateModalTaskNotes(notesVal) {
+      if (!activeModalTask) return;
+      setTaskNotes(activeModalTask.stageId, activeModalTask.taskId, notesVal);
+    }
+
+    function toggleModalCheckitem(idx) {
+      if (!activeModalTask) return;
+      toggleTaskCheckitem(activeModalTask.stageId, activeModalTask.taskId, idx);
+      // Re-render checklist in modal
+      const proj = getActiveProject();
+      const stage = proj.stages.find(s => s.id === activeModalTask.stageId);
+      const task = stage.tasks.find(t => t.id === activeModalTask.taskId);
+      openTaskModal(stage.id, task.id);
+    }
+
+    // Full JSON Export across all projects
+    document.getElementById('exportJsonBtn').addEventListener('click', () => {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `freeware-rollout-manager-all-projects-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Exported all projects to backup JSON.");
+    });
+
+    // JSON Import
+    document.getElementById('importJsonInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed.projects && Array.isArray(parsed.projects)) {
+            appState = parsed;
+          } else if (Array.isArray(parsed)) {
+            // Backwards compatibility with previous single project export
+            appState = {
+              activeProjectId: "proj-1",
+              projects: [
+                {
+                  id: "proj-1",
+                  name: "Imported App Rollout",
+                  horizon: "3 – 6 Months",
+                  stages: parsed
+                }
+              ]
+            };
+          }
+          saveAppState();
+          renderProjectSelector();
+          updateDashboardMetrics();
+          renderCurrentView();
+          showToast("Projects restored from JSON successfully!");
+        } catch (err) {
+          showToast("Invalid JSON file.", "⚠️");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    // Markdown Summary Modal
+    document.getElementById('exportMdBtn').addEventListener('click', () => {
+      const proj = getActiveProject();
+      let md = `# Freeware Rollout Stage Process Strategy\n`;
+      md += `*Project: ${proj.name} | Timeline Horizon: ${proj.horizon}*\n`;
+      md += `*Generated: ${new Date().toLocaleDateString()} | Solo Developer Local Blueprint*\n\n`;
+
+      let total = 0;
+      let completed = 0;
+      proj.stages.forEach(s => s.tasks.forEach(t => {
+        total++;
+        if (t.status === 'completed') completed++;
+      }));
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      md += `**Progress Summary:** ${completed} of ${total} Tasks Complete (${pct}%)\n\n`;
+
+      proj.stages.forEach(stage => {
+        md += `## Stage ${stage.number}: ${stage.title} (${stage.timeframe})\n`;
+        md += `${stage.description}\n\n`;
+
+        stage.tasks.forEach(task => {
+          const statusIcon = task.status === 'completed' ? '[x]' : (task.status === 'in_progress' ? '[-]' : '[ ]');
+          md += `### ${statusIcon} ${task.title}\n`;
+          md += `- **Status:** ${task.status.toUpperCase()} | **Priority:** ${task.priority} | **Target Due:** ${task.targetDate || 'Unscheduled'}\n`;
+          
+          if (task.checklist && task.checklist.length > 0) {
+            md += `- **Action Items:**\n`;
+            task.checklist.forEach(item => {
+              md += `  - ${item.done ? '[x]' : '[ ]'} ${item.text}\n`;
+            });
+          }
+
+          if (task.notes && task.notes.trim()) {
+            md += `- **Notes:** ${task.notes.trim()}\n`;
+          }
+          md += `\n`;
+        });
+        md += `---\n\n`;
+      });
+
+      document.getElementById('markdownOutput').value = md;
+      document.getElementById('exportModal').classList.remove('hidden');
+    });
+
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.add('hidden');
+    }
+
+    function copyMarkdownToClipboard() {
+      const txt = document.getElementById('markdownOutput');
+      txt.select();
+      document.execCommand('copy');
+      showToast("Markdown copied to clipboard!");
+    }
+
+    function showToast(message, icon = '✓') {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toastMessage');
+      const ic = document.getElementById('toastIcon');
+      msg.textContent = message;
+      ic.textContent = icon;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2400);
+    }
+
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAppState();
+    });
+  </script>
+</body>
+</html>
